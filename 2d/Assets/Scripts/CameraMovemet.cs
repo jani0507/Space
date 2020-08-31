@@ -4,75 +4,51 @@ using UnityEngine;
 
 public class CameraMovemet : MonoBehaviour
 {
-    public float speed = 20f;
+    Vector3 touchStart;
+    public float zoomOutMin = 1;
+    public float zoomOutMax = 6;
 
-    public float ScreenEnde = 10f;
+    public float minX, minY, maxX, maxY;
 
-    public Vector2 StopCamera;
-
-    public float scrollspeed = 2f;
-
-    public float MaxScroll = 120f;
-
-    public float MinScroll = 40f;
+    private void Start()
+    {
+        
+    }
 
     void Update()
-
     {
-
-        Vector3 pos = transform.position;
-
-
-
-        if (Input.GetKey(KeyCode.W) || Input.mousePosition.y >= Screen.height - ScreenEnde)
-
+        if (Input.GetMouseButtonDown(0))
         {
-
-            pos.y += speed * Time.deltaTime;
-
+            touchStart = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         }
-
-        if (Input.GetKey(KeyCode.S) || Input.mousePosition.y <= ScreenEnde)
-
+        if(Input.touchCount == 2)
         {
+            Touch touchZero = Input.GetTouch(0);
+            Touch touchOne = Input.GetTouch(1);
 
-            pos.y -= speed * Time.deltaTime;
+            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
+            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
 
+            float prevMagnitude = (touchZeroPrevPos - touchOnePrevPos).magnitude;
+            float currentMagnitude = (touchZero.position - touchOne.position).magnitude;
+
+            float difference = currentMagnitude - prevMagnitude;
+
+            zoom(difference * 0.01f);
         }
-
-        if (Input.GetKey(KeyCode.A) || Input.mousePosition.x <= ScreenEnde)
-
+        else if (Input.GetMouseButton(0))
         {
-
-            pos.x -= speed * Time.deltaTime;
-
+            Vector3 direction = touchStart - Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            /*direction.x = Mathf.Clamp(0, -0.39f, 0.42f);
+           direction.y = Mathf.Clamp(0, -0.51f, 0.41f);*/
+            transform.position += direction;
+            transform.position = new Vector3(Mathf.Clamp(transform.position.x, minX, maxX), Mathf.Clamp(transform.position.y, minY, maxY), -10);
         }
+        zoom(Input.GetAxis("Mouse ScrollWheel"));
+    }
 
-        if (Input.GetKey(KeyCode.D) || Input.mousePosition.x >= Screen.width - ScreenEnde)
-
-        {
-
-            pos.x += speed * Time.deltaTime;
-
-        }
-
-
-
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-
-        pos.z += scroll * scrollspeed * 100f * Time.deltaTime;
-
-
-
-        pos.x = Mathf.Clamp(pos.x, -StopCamera.x, StopCamera.x);
-
-        pos.y = Mathf.Clamp(pos.y, -StopCamera.y, StopCamera.y);
-
-        pos.z = Mathf.Clamp(pos.z, -MaxScroll, MinScroll);
-
-
-
-        transform.position = pos;
-
+    void zoom(float increment)
+    {
+        Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize - increment, zoomOutMin, zoomOutMax);
     }
 }
